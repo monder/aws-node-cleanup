@@ -128,6 +128,14 @@ func detachEBSVolume(volumeName corev1.UniqueVolumeName, node *corev1.Node) erro
 		log.Printf("Volume %s is already detached\n", volumeName)
 		return nil
 	}
+	if len(res.Volumes) == 1 &&
+		len(res.Volumes[0].Attachments) == 1 && res.Volumes[0].Attachments[0].InstanceId != nil &&
+		res.Volumes[0].Attachments[0].Device != nil &&
+		*res.Volumes[0].Attachments[0].InstanceId != instanceID {
+
+		log.Printf("Volume %s is attached to other instance\n", volumeName)
+		return nil
+	}
 	_, err = svc.DetachVolumeWithContext(ctx, &ec2.DetachVolumeInput{
 		InstanceId: aws.String(instanceID),
 		VolumeId:   aws.String(volumeID),
