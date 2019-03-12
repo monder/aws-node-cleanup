@@ -37,6 +37,7 @@ func main() {
 	}
 	for {
 		cleanupNodesIfNeeded(clientset)
+		mountPendingEBSVolumes(clientset)
 		time.Sleep(10 * time.Second)
 	}
 }
