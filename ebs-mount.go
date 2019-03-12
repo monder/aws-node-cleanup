@@ -196,7 +196,6 @@ func mountPendingEBSVolumes(clientset *kubernetes.Clientset) {
 		panic(err.Error())
 	}
 
-	log.Printf("running\n")
 	// First detach volumes we dont need
 	for _, node := range nodes.Items {
 		if node.Annotations["volumes.kubernetes.io/controller-managed-attach-detach"] != "true" {
