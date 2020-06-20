@@ -26,6 +26,19 @@ func hasReadyCondition(conditions []corev1.NodeCondition) bool {
 	return false
 }
 
+func hasNodeLease(clientset *kubernetes.Clientset, nodeName string) bool {
+	lease, err := clientset.CoordinationV1beta1().Leases("kube-node-lease").Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	leaseDuration := time.Since(lease.Spec.RenewTime.Time)
+	var maxLeaseDurationSeconds float64 = 30
+	if lease.Spec.LeaseDurationSeconds != nil {
+		maxLeaseDurationSeconds = float64(*lease.Spec.LeaseDurationSeconds)
+	}
+	return leaseDuration.Seconds() < maxLeaseDurationSeconds
+}
+
 func shouldRemoveNode(node corev1.Node) bool {
 	providerID := node.Spec.ProviderID
 	parsedProviderID := strings.Split(providerID, "/")
@@ -62,7 +75,7 @@ func cleanupNodesIfNeeded(clientset *kubernetes.Clientset) {
 		panic(err.Error())
 	}
 	for _, node := range nodes.Items {
-		if !hasReadyCondition(node.Status.Conditions) {
+		if !hasNodeLease(clientset, node.Name) && !hasReadyCondition(node.Status.Conditions) {
 			if shouldRemoveNode(node) {
 				log.Printf("Removing node %s\n", node.Name)
 				clientset.CoreV1().Nodes().Delete(node.Name, &metav1.DeleteOptions{})

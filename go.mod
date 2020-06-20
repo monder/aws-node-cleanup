@@ -1,5 +1,7 @@
 module github.com/monder/aws-node-cleanup
 
+go 1.14
+
 require (
 	github.com/aws/aws-sdk-go v1.16.17
 	github.com/davecgh/go-spew v1.1.1 // indirect
